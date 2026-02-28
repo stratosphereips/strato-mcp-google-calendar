@@ -2,16 +2,12 @@
 
 A Python MCP server that exposes Google Calendar as tools for Claude.
 
-## Features
+**9 tools:** list, search, get, create, update, and delete events; list and get
+calendars; check free/busy intervals.
 
-- **9 tools**: list/search/get/create/update/delete events, list/get calendars, check free/busy
-- OAuth 2.0 browser flow on first run; tokens stored locally
-- All logging goes to `stderr` — `stdout` stays clean for MCP stdio transport
-- Architecturally ready for multi-user support
+---
 
-## Setup
-
-### 1. Get Google OAuth credentials
+## Prerequisites
 
 **Enable the Google Calendar API:**
 
@@ -29,38 +25,107 @@ A Python MCP server that exposes Google Calendar as tools for Claude.
 2. Go to `APIs & Services` → `Credentials` → `Create credentials` → `OAuth client ID` → `Desktop app`
 3. Copy the `Client ID` and `Client Secret` — you'll add them to your `.env` in the next step
 
-### 2. Install
+---
+
+## Quick start (Docker — recommended)
+
+### Step 1: Build
 
 ```bash
-git clone https://github.com/your-org/strato-mcp-google-calendar
+docker compose build
+```
+
+### Step 2: Configure
+
+```bash
+cp .env.example .env
+# Fill in GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET
+```
+
+> This file contains your OAuth credentials in plain text. Restrict its permissions:
+> `chmod 600 .env`
+
+### Step 3: Authenticate (once)
+
+Run the auth service. It prints an authorization URL — open it in your browser, sign in,
+and grant calendar access. The token is saved to the shared Docker volume and the command exits.
+
+```bash
+docker compose run --rm -p 8081:8081 auth
+```
+
+### Step 4: Register with Claude
+
+**Claude Desktop** — edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "google-calendar": {
+      "command": "docker",
+      "args": [
+        "run", "--rm", "-i",
+        "-v", "google-calendar-mcp-tokens:/tokens",
+        "--env-file", "/absolute/path/to/.env",
+        "google-calendar-mcp:latest",
+        "serve"
+      ]
+    }
+  }
+}
+```
+
+Replace `/absolute/path/to/.env` with the full path to your `.env` file. Claude Desktop
+launches Docker from an unspecified working directory; relative paths do not work.
+
+**Claude Code:**
+
+```bash
+claude mcp add --transport stdio google-calendar -- \
+  docker run --rm -i \
+    -v google-calendar-mcp-tokens:/tokens \
+    --env-file /absolute/path/to/.env \
+    google-calendar-mcp:latest serve
+```
+
+---
+
+## Alternative: local install (without Docker)
+
+### Step 1: Install
+
+```bash
+git clone https://github.com/stratosphereips/strato-mcp-google-calendar
 cd strato-mcp-google-calendar
 uv venv && source .venv/bin/activate
 uv pip install -e .
 ```
 
-### 3. Configure
+### Step 2: Configure
 
 ```bash
 cp .env.example .env
-# Edit .env and fill in GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET
+# Fill in GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET
 ```
 
-### 4. Authenticate (first run)
+> This file contains your OAuth credentials in plain text. Restrict its permissions:
+> `chmod 600 .env`
+
+### Step 3: Authenticate (once)
+
+Run the auth command. It prints an authorization URL — open it in your browser, sign in,
+and grant calendar access. The token is saved to `~/.config/google-calendar-mcp/`.
 
 ```bash
-google-calendar-mcp
-# Browser opens → sign in → grant calendar access → Ctrl+C once redirected
+google-calendar-auth
 ```
 
-Tokens are saved to `~/.config/google-calendar-mcp/default.token.json`.
+### Step 4: Register with Claude
 
----
+**Claude Desktop** — edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
-## Register with Claude
-
-### Claude Desktop
-
-Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
+> This file will contain your OAuth credentials in plain text. Restrict its permissions
+> after editing: `chmod 600 ~/Library/Application\ Support/Claude/claude_desktop_config.json`.
 
 ```json
 {
@@ -76,15 +141,14 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 }
 ```
 
-### Claude Code
+**Claude Code:**
 
 ```bash
 claude mcp add google-calendar /absolute/path/.venv/bin/google-calendar-mcp \
   --env-file /absolute/path/to/.env
 ```
 
-> **Note:** Avoid `--env KEY=VALUE` on the command line — credentials passed that
-> way are visible in shell history and `ps` output. Use `--env-file` instead.
+> Avoid `--env KEY=VALUE` — credentials passed that way appear in shell history and `ps`.
 
 ---
 
@@ -104,96 +168,6 @@ claude mcp add google-calendar /absolute/path/.venv/bin/google-calendar-mcp \
 
 ---
 
-## Development
-
-```bash
-uv pip install -e ".[dev]"   # install with dev dependencies
-pytest                        # run all 65 tests
-```
-
-### Project structure
-
-```
-src/google_calendar_mcp/
-├── server.py          # FastMCP entry point
-├── config.py          # Env-var config loading
-├── auth/
-│   ├── oauth.py       # OAuth flow
-│   └── token_store.py # TokenStore ABC + FileTokenStore
-├── calendar/
-│   ├── client.py      # Google API client factory
-│   ├── events.py      # Events API wrappers
-│   ├── calendars.py   # CalendarList wrappers
-│   └── freebusy.py    # FreeBusy wrapper
-└── tools/
-    ├── events.py      # MCP tool definitions
-    ├── calendars.py
-    └── freebusy.py
-```
-
----
-
-## Running with Docker
-
-### 1. Build the image
-
-```bash
-docker build -t google-calendar-mcp:latest .
-```
-
-### 2. Authenticate (once)
-
-Run the auth flow interactively. It will open a browser, save the token to the shared compose volume, and exit:
-
-```bash
-docker compose run --rm -p 8081:8081 auth
-```
-
-Credentials are read from `.env` — they do not appear in the shell command, shell history, or `ps` output.
-
-### 3. Test locally
-
-```bash
-docker compose run --rm mcp
-```
-
-### 4. Register with Claude Desktop (Docker)
-
-In `claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "google-calendar": {
-      "command": "docker",
-      "args": [
-        "run", "--rm", "-i",
-        "-v", "google-calendar-mcp-tokens:/tokens",
-        "--env-file", "/absolute/path/to/.env",
-        "google-calendar-mcp:latest",
-        "serve"
-      ]
-    }
-  }
-}
-```
-
-Replace `/absolute/path/to/.env` with the full path to your `.env` file. Claude Desktop launches docker from an unspecified working directory, so a relative path will not work.
-
-### 5. Register with Claude Code (Docker)
-
-```bash
-claude mcp add --transport stdio google-calendar -- \
-  docker run --rm -i \
-    -v google-calendar-mcp-tokens:/tokens \
-    --env-file /absolute/path/to/.env \
-    google-calendar-mcp:latest serve
-```
-
-(`--transport stdio` is the default but shown explicitly for clarity. `-i` keeps stdin open for the MCP stdio transport. Replace `/absolute/path/to/.env` with the full path to your `.env` file.)
-
----
-
 ## Configuration reference
 
 | Variable | Required | Default | Description |
@@ -201,7 +175,18 @@ claude mcp add --transport stdio google-calendar -- \
 | `GOOGLE_CLIENT_ID` | Yes | — | OAuth client ID |
 | `GOOGLE_CLIENT_SECRET` | Yes | — | OAuth client secret |
 | `GOOGLE_REDIRECT_URI` | No | `http://localhost:8081` | OAuth redirect URI |
-| `TOKEN_STORE_PATH` | No | `~/.config/google-calendar-mcp/` | Token storage directory |
-| `GOOGLE_SCOPES` | No | `https://www.googleapis.com/auth/calendar` | OAuth scopes (comma-separated) |
+| `TOKEN_STORE_PATH` | No | `~/.config/google-calendar-mcp/` (local); `/tokens` (Docker) | Token storage directory |
+| `GOOGLE_SCOPES` | No | `https://www.googleapis.com/auth/calendar` | OAuth scopes (comma-separated). The default grants full read/write access (create, update, delete). For read-only access use `https://www.googleapis.com/auth/calendar.readonly`. |
 | `DEFAULT_CALENDAR_ID` | No | `primary` | Default calendar |
 | `LOG_LEVEL` | No | `WARNING` | Log level (stderr only) |
+
+---
+
+## Development
+
+```bash
+uv pip install -e ".[dev]"
+pytest                        # run all 88 tests
+```
+
+
