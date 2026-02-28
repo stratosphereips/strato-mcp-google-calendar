@@ -1,11 +1,14 @@
 .venv/
 .git/
+.claude/
 tests/
 *.pyc
 __pycache__/
 .env
 *.token.json
 .pytest_cache/
+.benchmarks/
+.uv-cache/
 dist/
 build/
 *.egg-info/
