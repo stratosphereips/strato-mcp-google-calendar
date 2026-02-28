@@ -1,6 +1,7 @@
 services:
   auth:
     build: .
+    image: google-calendar-mcp:latest
     command: auth
     ports:
       - "8081:8081"
@@ -12,6 +13,7 @@ services:
 
   mcp:
     build: .
+    image: google-calendar-mcp:latest
     command: serve
     stdin_open: true
     env_file: .env
