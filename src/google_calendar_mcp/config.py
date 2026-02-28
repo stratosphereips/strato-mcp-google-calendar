@@ -9,8 +9,6 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-load_dotenv()
-
 # All logging goes to stderr so stdout stays clean for MCP stdio transport
 logging.basicConfig(
     stream=sys.stderr,
@@ -51,11 +49,12 @@ class Config:
 
 
 def load_config() -> Config:
-    """Load configuration from environment variables.
+    """Load configuration from environment variables (and .env file if present).
 
     Raises:
         ConfigurationError: If required variables are missing.
     """
+    load_dotenv()
     client_id = os.getenv("GOOGLE_CLIENT_ID", "")
     client_secret = os.getenv("GOOGLE_CLIENT_SECRET", "")
 
