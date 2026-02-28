@@ -146,11 +146,11 @@ Run the auth flow interactively. It will open a browser, save the token to a nam
 ```bash
 docker run --rm -it -p 8081:8081 \
   -v google-calendar-tokens:/tokens \
-  -e GOOGLE_CLIENT_ID=your_client_id \
-  -e GOOGLE_CLIENT_SECRET=your_client_secret \
-  -e TOKEN_STORE_PATH=/tokens \
+  --env-file .env \
   google-calendar-mcp:latest auth
 ```
+
+Credentials are read from `.env` — they do not appear in the shell command, shell history, or `ps` output.
 
 ### 3. Test locally
 
@@ -170,9 +170,7 @@ In `claude_desktop_config.json`:
       "args": [
         "run", "--rm", "-i",
         "-v", "google-calendar-tokens:/tokens",
-        "-e", "GOOGLE_CLIENT_ID=your_client_id",
-        "-e", "GOOGLE_CLIENT_SECRET=your_client_secret",
-        "-e", "TOKEN_STORE_PATH=/tokens",
+        "--env-file", "/absolute/path/to/.env",
         "google-calendar-mcp:latest",
         "serve"
       ]
@@ -181,15 +179,15 @@ In `claude_desktop_config.json`:
 }
 ```
 
+Replace `/absolute/path/to/.env` with the full path to your `.env` file. Claude Desktop launches docker from an unspecified working directory, so a relative path will not work.
+
 ### 5. Register with Claude Code (Docker)
 
 ```bash
 claude mcp add google-calendar -- \
   docker run --rm -i \
     -v google-calendar-tokens:/tokens \
-    -e GOOGLE_CLIENT_ID=your_client_id \
-    -e GOOGLE_CLIENT_SECRET=your_client_secret \
-    -e TOKEN_STORE_PATH=/tokens \
+    --env-file /absolute/path/to/.env \
     google-calendar-mcp:latest serve
 ```
 

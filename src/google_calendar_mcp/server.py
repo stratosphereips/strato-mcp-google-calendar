@@ -59,7 +59,7 @@ def main() -> None:
             "\n[ERROR] No valid token found. Run authentication first:\n\n"
             "  docker run --rm -it -p 8081:8081 \\\n"
             "    -v google-calendar-tokens:/tokens \\\n"
-            "    -e GOOGLE_CLIENT_ID=... -e GOOGLE_CLIENT_SECRET=... \\\n"
+            "    --env-file .env \\\n"
             "    google-calendar-mcp:latest auth\n",
             file=sys.stderr,
         )
