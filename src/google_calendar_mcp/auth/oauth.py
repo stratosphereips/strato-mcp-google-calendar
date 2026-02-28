@@ -111,7 +111,7 @@ def get_credentials(
     port = urlparse(config.redirect_uri).port or 8081
     try:
         flow = InstalledAppFlow.from_client_config(client_config, scopes=config.scopes)
-        creds = flow.run_local_server(port=port, open_browser=False)
+        creds = flow.run_local_server(host="0.0.0.0", port=port, open_browser=False)
     except Exception as exc:
         raise CalendarAuthError(
             f"OAuth flow failed for user {user_id!r}: {exc}"
