@@ -17,9 +17,14 @@ token_*.json
 
 # uv
 .python-version
+.uv-cache/
 
 # Testing
 .pytest_cache/
+.benchmarks/
+
+# Claude Code
+.claude/
 .coverage
 htmlcov/
 
