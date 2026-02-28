@@ -1,5 +1,4 @@
 # syntax=docker/dockerfile:1
-# check=skip=SecretsUsedInArgOrEnv
 
 # ---------------------------------------------------------------------------
 # Stage 1: builder — install production dependencies with uv
