@@ -154,3 +154,62 @@ class TestDeleteEvent:
         mock_client.events().delete.return_value.execute.side_effect = _http_error(404)
         with pytest.raises(CalendarApiError):
             delete_event(mock_client, event_id="missing")
+
+
+class TestCreateEventColorReminders:
+    def test_includes_color_id(self, mock_client):
+        mock_client.events().insert.return_value.execute.return_value = {}
+        create_event(mock_client, summary="X", start="2024-01-15T10:00:00Z", end="2024-01-15T11:00:00Z", color_id="3")
+        body = mock_client.events().insert.call_args.kwargs["body"]
+        assert body["colorId"] == "3"
+
+    def test_includes_reminders(self, mock_client):
+        mock_client.events().insert.return_value.execute.return_value = {}
+        create_event(mock_client, summary="X", start="2024-01-15T10:00:00Z", end="2024-01-15T11:00:00Z",
+                     reminders=[{"method": "popup", "minutes": 10}])
+        body = mock_client.events().insert.call_args.kwargs["body"]
+        assert body["reminders"] == {"useDefault": False, "overrides": [{"method": "popup", "minutes": 10}]}
+
+    def test_omits_color_when_not_given(self, mock_client):
+        mock_client.events().insert.return_value.execute.return_value = {}
+        create_event(mock_client, summary="X", start="2024-01-15T10:00:00Z", end="2024-01-15T11:00:00Z")
+        body = mock_client.events().insert.call_args.kwargs["body"]
+        assert "colorId" not in body
+
+    def test_omits_reminders_when_not_given(self, mock_client):
+        mock_client.events().insert.return_value.execute.return_value = {}
+        create_event(mock_client, summary="X", start="2024-01-15T10:00:00Z", end="2024-01-15T11:00:00Z")
+        body = mock_client.events().insert.call_args.kwargs["body"]
+        assert "reminders" not in body
+
+
+class TestUpdateEventColorReminders:
+    def test_includes_color_id(self, mock_client):
+        mock_client.events().patch.return_value.execute.return_value = {}
+        update_event(mock_client, event_id="ev1", color_id="5")
+        body = mock_client.events().patch.call_args.kwargs["body"]
+        assert body["colorId"] == "5"
+
+    def test_includes_reminders(self, mock_client):
+        mock_client.events().patch.return_value.execute.return_value = {}
+        update_event(mock_client, event_id="ev1", reminders=[{"method": "popup", "minutes": 30}])
+        body = mock_client.events().patch.call_args.kwargs["body"]
+        assert body["reminders"] == {"useDefault": False, "overrides": [{"method": "popup", "minutes": 30}]}
+
+    def test_omits_color_when_not_given(self, mock_client):
+        mock_client.events().patch.return_value.execute.return_value = {}
+        update_event(mock_client, event_id="ev1", summary="New")
+        body = mock_client.events().patch.call_args.kwargs["body"]
+        assert "colorId" not in body
+
+    def test_omits_reminders_when_not_given(self, mock_client):
+        mock_client.events().patch.return_value.execute.return_value = {}
+        update_event(mock_client, event_id="ev1", summary="New")
+        body = mock_client.events().patch.call_args.kwargs["body"]
+        assert "reminders" not in body
+
+    def test_includes_empty_reminders_list(self, mock_client):
+        mock_client.events().patch.return_value.execute.return_value = {}
+        update_event(mock_client, event_id="ev1", reminders=[])
+        body = mock_client.events().patch.call_args.kwargs["body"]
+        assert body["reminders"] == {"useDefault": False, "overrides": []}

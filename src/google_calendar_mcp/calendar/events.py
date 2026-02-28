@@ -103,6 +103,8 @@ def create_event(
     location: str | None = None,
     attendees: list[str] | None = None,
     all_day: bool = False,
+    color_id: str | None = None,
+    reminders: list[dict] | None = None,
 ) -> dict[str, Any]:
     """Create a new calendar event.
 
@@ -116,6 +118,8 @@ def create_event(
         location: Optional event location.
         attendees: Optional list of attendee email addresses.
         all_day: If True, treat start/end as dates (not datetimes).
+        color_id: Optional event color ID (1–11 or empty string to reset).
+        reminders: Optional list of reminder dicts, e.g. [{"method":"popup","minutes":10}].
 
     Returns:
         Created event resource dict.
@@ -138,6 +142,10 @@ def create_event(
         body["location"] = location
     if attendees:
         body["attendees"] = [{"email": email} for email in attendees]
+    if color_id:
+        body["colorId"] = color_id
+    if reminders is not None:
+        body["reminders"] = {"useDefault": False, "overrides": reminders}
 
     try:
         return (
@@ -159,6 +167,8 @@ def update_event(
     description: str | None = None,
     location: str | None = None,
     attendees: list[str] | None = None,
+    color_id: str | None = None,
+    reminders: list[dict] | None = None,
 ) -> dict[str, Any]:
     """Update an existing event using patch semantics."""
     body: dict[str, Any] = {}
@@ -174,6 +184,10 @@ def update_event(
         body["location"] = location
     if attendees is not None:
         body["attendees"] = [{"email": email} for email in attendees]
+    if color_id is not None:
+        body["colorId"] = color_id
+    if reminders is not None:
+        body["reminders"] = {"useDefault": False, "overrides": reminders}
 
     try:
         return (

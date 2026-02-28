@@ -25,6 +25,29 @@ def _error(msg: str) -> str:
     return json.dumps({"error": msg})
 
 
+_COLOR_NAMES: dict[str, str] = {
+    "tomato": "1", "flamingo": "2", "tangerine": "3", "banana": "4",
+    "sage": "5", "basil": "6", "peacock": "7", "blueberry": "8",
+    "lavender": "9", "grape": "10", "graphite": "11",
+}
+
+
+def _resolve_color_id(value: str) -> str:
+    """Accept '1'–'11' or a color name; return the numeric string."""
+    v = value.strip().lower()
+    return _COLOR_NAMES.get(v, value.strip())
+
+
+def _parse_reminders(value: str) -> list[dict]:
+    """Parse '10,30' → [{"method":"popup","minutes":10}, {"method":"popup","minutes":30}]."""
+    result = []
+    for part in value.split(","):
+        part = part.strip()
+        if part.isdigit():
+            result.append({"method": "popup", "minutes": int(part)})
+    return result
+
+
 def register_event_tools(mcp: Any, get_client: Any) -> None:
     """Register all event-related MCP tools on the given FastMCP instance."""
 
@@ -128,6 +151,8 @@ def register_event_tools(mcp: Any, get_client: Any) -> None:
         location: str = "",
         attendees: str = "",
         all_day: bool = False,
+        color_id: str = "",
+        reminders: str = "",
     ) -> str:
         """Create a new event in a Google Calendar.
 
@@ -140,6 +165,12 @@ def register_event_tools(mcp: Any, get_client: Any) -> None:
             location: Optional event location.
             attendees: Comma-separated list of attendee email addresses.
             all_day: Set to true for all-day events (use YYYY-MM-DD for start/end).
+            color_id: Optional event color. Use a number 1-11 or a name:
+                1=Tomato 2=Flamingo 3=Tangerine 4=Banana 5=Sage 6=Basil
+                7=Peacock 8=Blueberry 9=Lavender 10=Grape 11=Graphite
+            reminders: Comma-separated minutes before event for popup reminders.
+                E.g. "10" for 10-minute reminder, "10,30" for two reminders.
+                Leave empty to use the calendar's default reminders.
         """
         if not summary.strip():
             return _error("summary must not be empty")
@@ -151,6 +182,8 @@ def register_event_tools(mcp: Any, get_client: Any) -> None:
             if attendees
             else None
         )
+        resolved_color = _resolve_color_id(color_id) if color_id else None
+        parsed_reminders = _parse_reminders(reminders) if reminders else None
         try:
             client = get_client()
             event = create_event(
@@ -163,6 +196,8 @@ def register_event_tools(mcp: Any, get_client: Any) -> None:
                 location=location or None,
                 attendees=attendee_list,
                 all_day=all_day,
+                color_id=resolved_color,
+                reminders=parsed_reminders,
             )
             return json.dumps(event)
         except CalendarApiError as exc:
@@ -181,6 +216,8 @@ def register_event_tools(mcp: Any, get_client: Any) -> None:
         description: str = "",
         location: str = "",
         attendees: str = "",
+        color_id: str = "",
+        reminders: str = "",
     ) -> str:
         """Update an existing calendar event.
 
@@ -195,6 +232,12 @@ def register_event_tools(mcp: Any, get_client: Any) -> None:
             description: New description (leave empty to keep current).
             location: New location (leave empty to keep current).
             attendees: New comma-separated attendee emails (leave empty to keep current).
+            color_id: Optional event color. Use a number 1-11 or a name:
+                1=Tomato 2=Flamingo 3=Tangerine 4=Banana 5=Sage 6=Basil
+                7=Peacock 8=Blueberry 9=Lavender 10=Grape 11=Graphite
+            reminders: Comma-separated minutes before event for popup reminders.
+                E.g. "10" for 10-minute reminder, "10,30" for two reminders.
+                Leave empty to keep current reminders.
         """
         if not event_id.strip():
             return _error("event_id must not be empty")
@@ -204,6 +247,8 @@ def register_event_tools(mcp: Any, get_client: Any) -> None:
             if attendees
             else None
         )
+        resolved_color = _resolve_color_id(color_id) if color_id else None
+        parsed_reminders = _parse_reminders(reminders) if reminders else None
         try:
             client = get_client()
             event = update_event(
@@ -216,6 +261,8 @@ def register_event_tools(mcp: Any, get_client: Any) -> None:
                 description=description or None,
                 location=location or None,
                 attendees=attendee_list,
+                color_id=resolved_color,
+                reminders=parsed_reminders,
             )
             return json.dumps(event)
         except CalendarApiError as exc:

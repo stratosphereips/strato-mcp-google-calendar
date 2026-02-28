@@ -130,6 +130,79 @@ class TestEventTools:
         result = json.loads(self.recorder.call("delete_event_tool", event_id=""))
         assert "error" in result
 
+    def test_create_tool_resolves_color_name(self):
+        self.client.events().insert.return_value.execute.return_value = {}
+        self.recorder.call(
+            "create_event_tool",
+            summary="Test",
+            start="2024-01-15T10:00:00Z",
+            end="2024-01-15T11:00:00Z",
+            color_id="Tomato",
+        )
+        body = self.client.events().insert.call_args.kwargs["body"]
+        assert body["colorId"] == "1"
+
+    def test_create_tool_parses_reminders_string(self):
+        self.client.events().insert.return_value.execute.return_value = {}
+        self.recorder.call(
+            "create_event_tool",
+            summary="Test",
+            start="2024-01-15T10:00:00Z",
+            end="2024-01-15T11:00:00Z",
+            reminders="10,30",
+        )
+        body = self.client.events().insert.call_args.kwargs["body"]
+        overrides = body["reminders"]["overrides"]
+        assert len(overrides) == 2
+        assert {"method": "popup", "minutes": 10} in overrides
+        assert {"method": "popup", "minutes": 30} in overrides
+
+    def test_create_tool_omits_color_when_empty(self):
+        self.client.events().insert.return_value.execute.return_value = {}
+        self.recorder.call(
+            "create_event_tool",
+            summary="Test",
+            start="2024-01-15T10:00:00Z",
+            end="2024-01-15T11:00:00Z",
+        )
+        body = self.client.events().insert.call_args.kwargs["body"]
+        assert "colorId" not in body
+
+    def test_create_tool_omits_reminders_when_empty(self):
+        self.client.events().insert.return_value.execute.return_value = {}
+        self.recorder.call(
+            "create_event_tool",
+            summary="Test",
+            start="2024-01-15T10:00:00Z",
+            end="2024-01-15T11:00:00Z",
+        )
+        body = self.client.events().insert.call_args.kwargs["body"]
+        assert "reminders" not in body
+
+    def test_update_tool_resolves_color_name(self):
+        self.client.events().patch.return_value.execute.return_value = {}
+        self.recorder.call("update_event_tool", event_id="ev1", color_id="Blueberry")
+        body = self.client.events().patch.call_args.kwargs["body"]
+        assert body["colorId"] == "8"
+
+    def test_update_tool_parses_reminders_string(self):
+        self.client.events().patch.return_value.execute.return_value = {}
+        self.recorder.call("update_event_tool", event_id="ev1", reminders="15")
+        body = self.client.events().patch.call_args.kwargs["body"]
+        assert body["reminders"] == {"useDefault": False, "overrides": [{"method": "popup", "minutes": 15}]}
+
+    def test_update_tool_omits_color_when_empty(self):
+        self.client.events().patch.return_value.execute.return_value = {}
+        self.recorder.call("update_event_tool", event_id="ev1", summary="New")
+        body = self.client.events().patch.call_args.kwargs["body"]
+        assert "colorId" not in body
+
+    def test_update_tool_omits_reminders_when_empty(self):
+        self.client.events().patch.return_value.execute.return_value = {}
+        self.recorder.call("update_event_tool", event_id="ev1", summary="New")
+        body = self.client.events().patch.call_args.kwargs["body"]
+        assert "reminders" not in body
+
 
 # ---------------------------------------------------------------------------
 # Calendar tools
