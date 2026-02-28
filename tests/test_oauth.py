@@ -50,18 +50,29 @@ class TestCredentialsSerialization:
         assert data["token"] == "access123"
         assert data["refresh_token"] == "refresh123"
 
-    def test_from_dict_sets_fields(self):
+    def test_client_secret_not_persisted(self, mock_valid_creds):
+        data = _credentials_to_dict(mock_valid_creds)
+        assert "client_secret" not in data
+
+    def test_from_dict_sets_fields(self, valid_config):
         data = {
             "token": "tok",
             "refresh_token": "ref",
             "token_uri": "https://oauth2.googleapis.com/token",
-            "client_id": "cid",
-            "client_secret": "csec",
             "scopes": ["https://www.googleapis.com/auth/calendar"],
         }
-        creds = _credentials_from_dict(data)
+        creds = _credentials_from_dict(data, valid_config)
         assert creds.token == "tok"
         assert creds.refresh_token == "ref"
+
+    def test_from_dict_injects_client_secret_from_config(self, valid_config):
+        data = {
+            "token": "tok",
+            "refresh_token": "ref",
+            "scopes": ["https://www.googleapis.com/auth/calendar"],
+        }
+        creds = _credentials_from_dict(data, valid_config)
+        assert creds.client_secret == valid_config.client_secret
 
 
 class TestGetCredentials:

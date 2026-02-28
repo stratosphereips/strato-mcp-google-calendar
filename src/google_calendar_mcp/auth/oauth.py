@@ -25,18 +25,18 @@ def _credentials_to_dict(creds: Credentials) -> dict[str, Any]:
         "refresh_token": creds.refresh_token,
         "token_uri": creds.token_uri,
         "client_id": creds.client_id,
-        "client_secret": creds.client_secret,
         "scopes": list(creds.scopes) if creds.scopes else [],
+        # client_secret intentionally omitted — injected from live config at load time
     }
 
 
-def _credentials_from_dict(data: dict[str, Any]) -> Credentials:
+def _credentials_from_dict(data: dict[str, Any], config: Config) -> Credentials:
     return Credentials(
         token=data.get("token"),
         refresh_token=data.get("refresh_token"),
         token_uri=data.get("token_uri", "https://oauth2.googleapis.com/token"),
-        client_id=data.get("client_id"),
-        client_secret=data.get("client_secret"),
+        client_id=config.client_id,
+        client_secret=config.client_secret,
         scopes=data.get("scopes"),
     )
 
@@ -69,7 +69,7 @@ def get_credentials(
     creds: Credentials | None = None
 
     if token_data:
-        creds = _credentials_from_dict(token_data)
+        creds = _credentials_from_dict(token_data, config)
 
     if creds and creds.valid:
         logger.debug("Using valid cached credentials for user %s", user_id)

@@ -106,6 +106,13 @@ class TestFileTokenStore:
         mode = path.stat().st_mode & 0o777
         assert mode == 0o600
 
+    def test_atomic_write_leaves_no_tmp_file(self, tmp_token_store, sample_token_data):
+        tmp_token_store.save("default", sample_token_data)
+        path = tmp_token_store._token_path("default")
+        tmp_path = path.with_suffix(".tmp")
+        assert path.exists()
+        assert not tmp_path.exists()
+
     def test_multiple_users_have_separate_files(self, tmp_token_store):
         tmp_token_store.save("alice", {"token": "alice-token"})
         tmp_token_store.save("bob", {"token": "bob-token"})

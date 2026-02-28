@@ -131,6 +131,72 @@ src/google_calendar_mcp/
 
 ---
 
+## Running with Docker
+
+### 1. Build the image
+
+```bash
+docker build -t google-calendar-mcp:latest .
+```
+
+### 2. Authenticate (once)
+
+Run the auth flow interactively. It will open a browser, save the token to a named volume, and exit:
+
+```bash
+docker run --rm -it -p 8081:8081 \
+  -v google-calendar-tokens:/tokens \
+  -e GOOGLE_CLIENT_ID=your_client_id \
+  -e GOOGLE_CLIENT_SECRET=your_client_secret \
+  -e TOKEN_STORE_PATH=/tokens \
+  google-calendar-mcp:latest auth
+```
+
+### 3. Test locally
+
+```bash
+docker compose run --rm mcp
+```
+
+### 4. Register with Claude Desktop (Docker)
+
+In `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "google-calendar": {
+      "command": "docker",
+      "args": [
+        "run", "--rm", "-i",
+        "-v", "google-calendar-tokens:/tokens",
+        "-e", "GOOGLE_CLIENT_ID=your_client_id",
+        "-e", "GOOGLE_CLIENT_SECRET=your_client_secret",
+        "-e", "TOKEN_STORE_PATH=/tokens",
+        "google-calendar-mcp:latest",
+        "serve"
+      ]
+    }
+  }
+}
+```
+
+### 5. Register with Claude Code (Docker)
+
+```bash
+claude mcp add google-calendar -- \
+  docker run --rm -i \
+    -v google-calendar-tokens:/tokens \
+    -e GOOGLE_CLIENT_ID=your_client_id \
+    -e GOOGLE_CLIENT_SECRET=your_client_secret \
+    -e TOKEN_STORE_PATH=/tokens \
+    google-calendar-mcp:latest serve
+```
+
+(`-i` keeps stdin open for the MCP stdio transport.)
+
+---
+
 ## Configuration reference
 
 | Variable | Required | Default | Description |

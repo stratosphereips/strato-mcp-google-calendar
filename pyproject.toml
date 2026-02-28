@@ -16,7 +16,8 @@ dependencies = [
 ]
 
 [project.scripts]
-google-calendar-mcp = "google_calendar_mcp.server:main"
+google-calendar-mcp  = "google_calendar_mcp.server:main"
+google-calendar-auth = "google_calendar_mcp.server:auth_main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/google_calendar_mcp"]

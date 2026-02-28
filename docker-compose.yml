@@ -1,0 +1,24 @@
+services:
+  auth:
+    build: .
+    command: auth
+    ports:
+      - "8081:8081"
+    env_file: .env
+    environment:
+      TOKEN_STORE_PATH: /tokens
+    volumes:
+      - tokens:/tokens
+
+  mcp:
+    build: .
+    command: serve
+    stdin_open: true
+    env_file: .env
+    environment:
+      TOKEN_STORE_PATH: /tokens
+    volumes:
+      - tokens:/tokens
+
+volumes:
+  tokens:

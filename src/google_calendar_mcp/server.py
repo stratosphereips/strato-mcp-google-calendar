@@ -54,9 +54,13 @@ def main() -> None:
     try:
         credentials = get_credentials("default", config, token_store)
     except CalendarAuthError as exc:
-        print(f"Authentication error: {exc}", file=sys.stderr)
+        print(f"[ERROR] {exc}", file=sys.stderr)
         print(
-            "Re-run 'google-calendar-mcp' to restart the OAuth flow.",
+            "\n[ERROR] No valid token found. Run authentication first:\n\n"
+            "  docker run --rm -it -p 8081:8081 \\\n"
+            "    -v google-calendar-tokens:/tokens \\\n"
+            "    -e GOOGLE_CLIENT_ID=... -e GOOGLE_CLIENT_SECRET=... \\\n"
+            "    google-calendar-mcp:latest auth\n",
             file=sys.stderr,
         )
         sys.exit(1)
@@ -67,6 +71,32 @@ def main() -> None:
     _register_tools()
 
     mcp.run()
+
+
+def auth_main() -> None:
+    """Entry point for the google-calendar-auth command.
+
+    Runs only the OAuth flow, saves the token, and exits 0.
+    Does not start the MCP server.
+    """
+    from google_calendar_mcp.auth.oauth import CalendarAuthError, get_credentials
+    from google_calendar_mcp.auth.token_store import FileTokenStore
+    from google_calendar_mcp.config import ConfigurationError, load_config
+
+    try:
+        config = load_config()
+    except ConfigurationError as exc:
+        print(f"Configuration error: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+    token_store = FileTokenStore(config.token_store_path)
+
+    try:
+        get_credentials("default", config, token_store)
+        print("Authentication successful. Token saved.", file=sys.stderr)
+    except CalendarAuthError as exc:
+        print(f"Authentication error: {exc}", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

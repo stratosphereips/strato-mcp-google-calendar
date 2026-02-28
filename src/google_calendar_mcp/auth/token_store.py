@@ -1,6 +1,7 @@
 """TokenStore ABC and FileTokenStore implementation."""
 from __future__ import annotations
 
+import fcntl
 import json
 import logging
 from abc import ABC, abstractmethod
@@ -54,6 +55,7 @@ class FileTokenStore(TokenStore):
             return None
         try:
             with path.open("r") as fh:
+                fcntl.flock(fh, fcntl.LOCK_SH)
                 data = json.load(fh)
             logger.debug("Loaded token for user %s", user_id)
             return data
@@ -64,11 +66,13 @@ class FileTokenStore(TokenStore):
     def save(self, user_id: str, data: dict[str, Any]) -> None:
         self._store_dir.mkdir(parents=True, exist_ok=True)
         path = self._token_path(user_id)
+        tmp = path.with_suffix(".tmp")
         try:
-            with path.open("w") as fh:
+            with tmp.open("w") as fh:
+                fcntl.flock(fh, fcntl.LOCK_EX)
                 json.dump(data, fh, indent=2)
-            # Restrict permissions: owner read/write only
-            path.chmod(0o600)
+            tmp.chmod(0o600)
+            tmp.replace(path)  # atomic on same filesystem
             logger.debug("Saved token for user %s to %s", user_id, path)
         except OSError as exc:
             logger.error("Failed to save token for %s: %s", user_id, exc)
