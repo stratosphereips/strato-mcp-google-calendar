@@ -154,7 +154,7 @@ class TestGetCredentials:
             ):
                 get_credentials("default", config, tmp_token_store)
 
-        mock_flow.run_local_server.assert_called_once_with(port=9090, open_browser=True)
+        mock_flow.run_local_server.assert_called_once_with(port=9090, open_browser=False)
 
     def test_raises_auth_error_when_browser_flow_fails(
         self, valid_config, tmp_token_store
