@@ -7,6 +7,13 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+
+# Prevent load_dotenv() from reading .env off disk during tests — each test
+# controls its own environment via monkeypatch.setenv / monkeypatch.delenv.
+@pytest.fixture(autouse=True)
+def _no_load_dotenv(monkeypatch):
+    monkeypatch.setattr("google_calendar_mcp.config.load_dotenv", lambda **_: None)
+
 from google_calendar_mcp.auth.token_store import FileTokenStore
 from google_calendar_mcp.config import Config
 
