@@ -36,7 +36,7 @@ def register_freebusy_tools(mcp: Any, get_client: Any) -> None:
         if not time_min.strip() or not time_max.strip():
             return _error("time_min and time_max must not be empty")
 
-        cal_ids = [c.strip() for c in calendar_ids.split(",") if c.strip()]
+        cal_ids = [c.strip() for c in calendar_ids.split(",") if c.strip()][:50]
         if not cal_ids:
             cal_ids = ["primary"]
 
