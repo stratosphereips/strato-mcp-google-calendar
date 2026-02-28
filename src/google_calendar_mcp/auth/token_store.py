@@ -66,7 +66,8 @@ class FileTokenStore(TokenStore):
             return None
 
     def save(self, user_id: str, data: dict[str, Any]) -> None:
-        self._store_dir.mkdir(parents=True, exist_ok=True)
+        self._store_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
+        self._store_dir.chmod(0o700)  # enforce regardless of umask
         path = self._token_path(user_id)
         # mkstemp uses O_CREAT|O_EXCL — refuses to follow symlinks and produces
         # an unpredictable name, eliminating the symlink-redirect attack vector.
