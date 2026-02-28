@@ -1,11 +1,7 @@
-# strato-mcp-google-calendar
+# Stratosphere MCP Google Calendar
 
-A Python MCP server that exposes Google Calendar as tools for Claude.
+A Python MCP server that exposes Google Calendar as tools for Claude. Currently supporting **9 tools:** list, search, get, create, update, and delete events; list and get calendars; check free/busy intervals.
 
-**9 tools:** list, search, get, create, update, and delete events; list and get
-calendars; check free/busy intervals.
-
----
 
 ## Prerequisites
 
@@ -25,9 +21,8 @@ calendars; check free/busy intervals.
 2. Go to `APIs & Services` → `Credentials` → `Create credentials` → `OAuth client ID` → `Desktop app`
 3. Copy the `Client ID` and `Client Secret` — you'll add them to your `.env` in the next step
 
----
 
-## Quick start (Docker — recommended)
+## Quick start (Docker)
 
 ### Step 1: Build
 
@@ -47,8 +42,7 @@ cp .env.example .env
 
 ### Step 3: Authenticate (once)
 
-Run the auth service. It prints an authorization URL — open it in your browser, sign in,
-and grant calendar access. The token is saved to the shared Docker volume and the command exits.
+Run the auth service. It prints an authorization URL. Open it in your browser, sign in, and grant calendar access. The token is saved to the shared Docker volume and the command exits.
 
 ```bash
 docker compose run --rm -p 8081:8081 auth
@@ -88,7 +82,6 @@ claude mcp add --transport stdio google-calendar -- \
     google-calendar-mcp:latest serve
 ```
 
----
 
 ## Alternative: local install (without Docker)
 
@@ -150,7 +143,6 @@ claude mcp add google-calendar /absolute/path/.venv/bin/google-calendar-mcp \
 
 > Avoid `--env KEY=VALUE` — credentials passed that way appear in shell history and `ps`.
 
----
 
 ## Available Tools
 
@@ -166,7 +158,6 @@ claude mcp add google-calendar /absolute/path/.venv/bin/google-calendar-mcp \
 | `get_calendar_tool` | Get details for one calendar |
 | `check_free_busy_tool` | Query busy intervals across calendars |
 
----
 
 ## Configuration reference
 
@@ -180,7 +171,6 @@ claude mcp add google-calendar /absolute/path/.venv/bin/google-calendar-mcp \
 | `DEFAULT_CALENDAR_ID` | No | `primary` | Default calendar |
 | `LOG_LEVEL` | No | `WARNING` | Log level (stderr only) |
 
----
 
 ## Development
 
