@@ -45,6 +45,8 @@ def get_credentials(
     user_id: str,
     config: Config,
     token_store: TokenStore,
+    *,
+    headless: bool = False,
 ) -> Credentials:
     """Return valid Google credentials for user_id.
 
@@ -52,12 +54,15 @@ def get_credentials(
     1. Try to load saved token from token_store.
     2. If valid, return immediately.
     3. If expired and refresh token exists, refresh and save.
-    4. If no token or refresh fails, run browser OAuth flow and save.
+    4. If no token or refresh fails:
+       - headless=True: raise CalendarAuthError immediately (serve path).
+       - headless=False: run browser OAuth flow and save (auth path).
 
     Args:
         user_id: Identifier for the user. Use "default" for single-user mode.
         config: Application configuration.
         token_store: Persistence layer for tokens.
+        headless: When True, raise instead of launching a browser flow.
 
     Returns:
         Valid :class:`google.oauth2.credentials.Credentials`.
@@ -83,8 +88,13 @@ def get_credentials(
             return creds
         except RefreshError as exc:
             logger.warning(
-                "Token refresh failed for user %s: %s. Starting new auth flow.", user_id, exc
+                "Token refresh failed for user %s: %s.", user_id, exc
             )
+
+    if headless:
+        raise CalendarAuthError(
+            f"No valid token found for user {user_id!r} and browser flow is disabled."
+        )
 
     # No valid credentials — run browser flow
     logger.info("Starting OAuth browser flow for user %s", user_id)

@@ -52,7 +52,7 @@ def main() -> None:
     token_store = FileTokenStore(config.token_store_path)
 
     try:
-        credentials = get_credentials("default", config, token_store)
+        credentials = get_credentials("default", config, token_store, headless=True)
     except CalendarAuthError as exc:
         print(f"[ERROR] {exc}", file=sys.stderr)
         print(
@@ -92,7 +92,7 @@ def auth_main() -> None:
     token_store = FileTokenStore(config.token_store_path)
 
     try:
-        get_credentials("default", config, token_store)
+        get_credentials("default", config, token_store, headless=False)
         print("Authentication successful. Token saved.", file=sys.stderr)
     except CalendarAuthError as exc:
         print(f"Authentication error: {exc}", file=sys.stderr)

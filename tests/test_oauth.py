@@ -142,6 +142,29 @@ class TestGetCredentials:
             with pytest.raises(CalendarAuthError):
                 get_credentials("default", valid_config, tmp_token_store)
 
+    def test_headless_raises_when_no_token(self, valid_config, tmp_token_store):
+        with pytest.raises(CalendarAuthError, match="browser flow is disabled"):
+            get_credentials("default", valid_config, tmp_token_store, headless=True)
+
+    def test_headless_raises_when_refresh_fails(
+        self, valid_config, tmp_token_store, sample_token_data
+    ):
+        tmp_token_store.save("default", sample_token_data)
+        with patch(
+            "google_calendar_mcp.auth.oauth._credentials_from_dict"
+        ) as mock_from_dict:
+            mock_creds = MagicMock(spec=Credentials)
+            mock_creds.valid = False
+            mock_creds.expired = True
+            mock_creds.refresh_token = "bad-token"
+            mock_creds.refresh.side_effect = RefreshError("token revoked")
+            mock_from_dict.return_value = mock_creds
+
+            with pytest.raises(CalendarAuthError, match="browser flow is disabled"):
+                get_credentials(
+                    "default", valid_config, tmp_token_store, headless=True
+                )
+
     def test_falls_back_to_browser_flow_when_refresh_fails(
         self, valid_config, tmp_token_store, sample_token_data
     ):
