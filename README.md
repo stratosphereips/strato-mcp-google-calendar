@@ -80,9 +80,11 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
 ```bash
 claude mcp add google-calendar /absolute/path/.venv/bin/google-calendar-mcp \
-  --env GOOGLE_CLIENT_ID=your_client_id \
-  --env GOOGLE_CLIENT_SECRET=your_client_secret
+  --env-file /absolute/path/to/.env
 ```
+
+> **Note:** Avoid `--env KEY=VALUE` on the command line — credentials passed that
+> way are visible in shell history and `ps` output. Use `--env-file` instead.
 
 ---
 
