@@ -4,6 +4,8 @@ from __future__ import annotations
 import fcntl
 import json
 import logging
+import os
+import tempfile
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any
@@ -66,15 +68,19 @@ class FileTokenStore(TokenStore):
     def save(self, user_id: str, data: dict[str, Any]) -> None:
         self._store_dir.mkdir(parents=True, exist_ok=True)
         path = self._token_path(user_id)
-        tmp = path.with_suffix(".tmp")
+        # mkstemp uses O_CREAT|O_EXCL — refuses to follow symlinks and produces
+        # an unpredictable name, eliminating the symlink-redirect attack vector.
+        fd, tmp_str = tempfile.mkstemp(dir=self._store_dir, prefix=f".{path.stem}-")
+        tmp = Path(tmp_str)
         try:
-            with tmp.open("w") as fh:
+            with os.fdopen(fd, "w") as fh:
                 fcntl.flock(fh, fcntl.LOCK_EX)
                 json.dump(data, fh, indent=2)
             tmp.chmod(0o600)
             tmp.replace(path)  # atomic on same filesystem
             logger.debug("Saved token for user %s to %s", user_id, path)
         except OSError as exc:
+            tmp.unlink(missing_ok=True)
             logger.error("Failed to save token for %s: %s", user_id, exc)
             raise
 
