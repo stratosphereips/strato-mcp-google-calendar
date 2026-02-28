@@ -25,26 +25,40 @@ def _error(msg: str) -> str:
     return json.dumps({"error": msg})
 
 
+_VALID_ORDER_BY = {"startTime", "updated"}
+
 _COLOR_NAMES: dict[str, str] = {
     "tomato": "1", "flamingo": "2", "tangerine": "3", "banana": "4",
     "sage": "5", "basil": "6", "peacock": "7", "blueberry": "8",
     "lavender": "9", "grape": "10", "graphite": "11",
 }
+_VALID_COLOR_IDS = set(_COLOR_NAMES.values())
+
+# Google Calendar API limits: max 5 overrides, minutes 0–40320 (4 weeks)
+_MAX_REMINDERS = 5
+_MAX_REMINDER_MINUTES = 40320
 
 
-def _resolve_color_id(value: str) -> str:
-    """Accept '1'–'11' or a color name; return the numeric string."""
+def _resolve_color_id(value: str) -> str | None:
+    """Accept '1'–'11' or a color name; return the numeric string, or None if invalid."""
     v = value.strip().lower()
-    return _COLOR_NAMES.get(v, value.strip())
+    resolved = _COLOR_NAMES.get(v, value.strip())
+    if resolved not in _VALID_COLOR_IDS:
+        return None
+    return resolved
 
 
 def _parse_reminders(value: str) -> list[dict]:
-    """Parse '10,30' → [{"method":"popup","minutes":10}, {"method":"popup","minutes":30}]."""
+    """Parse '10,30' → [{"method":"popup","minutes":10}, ...]. Capped at 5 entries."""
     result = []
     for part in value.split(","):
         part = part.strip()
         if part.isdigit():
-            result.append({"method": "popup", "minutes": int(part)})
+            minutes = int(part)
+            if 0 <= minutes <= _MAX_REMINDER_MINUTES:
+                result.append({"method": "popup", "minutes": minutes})
+        if len(result) >= _MAX_REMINDERS:
+            break
     return result
 
 
@@ -68,6 +82,8 @@ def register_event_tools(mcp: Any, get_client: Any) -> None:
             max_results: Maximum number of events to return (1-100).
             order_by: Sort order: 'startTime' or 'updated'.
         """
+        if order_by not in _VALID_ORDER_BY:
+            return _error(f"order_by must be one of: {', '.join(sorted(_VALID_ORDER_BY))}")
         try:
             client = get_client()
             events = list_events(
