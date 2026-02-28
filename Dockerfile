@@ -52,7 +52,7 @@ VOLUME ["/tokens"]
 # OCI image labels
 LABEL org.opencontainers.image.title="google-calendar-mcp" \
       org.opencontainers.image.description="MCP server exposing Google Calendar as tools for Claude" \
-      org.opencontainers.image.source="https://github.com/stratosphericus/strato-mcp-google-calendar" \
+      org.opencontainers.image.source="https://github.com/stratosphereips/strato-mcp-google-calendar" \
       org.opencontainers.image.version="0.1.0" \
       org.opencontainers.image.licenses="MIT"
 
