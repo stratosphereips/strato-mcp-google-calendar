@@ -1,6 +1,13 @@
 """TokenStore ABC and FileTokenStore implementation."""
 from __future__ import annotations
 
+import sys
+
+if sys.platform == "win32":
+    raise ImportError(
+        "FileTokenStore uses POSIX file locking (fcntl) and is not supported on Windows."
+    )
+
 import fcntl
 import json
 import logging
