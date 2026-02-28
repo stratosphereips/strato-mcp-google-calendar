@@ -7,6 +7,7 @@ from typing import Any
 
 from google_calendar_mcp.calendar.calendars import get_calendar, list_calendars
 from google_calendar_mcp.calendar.events import CalendarApiError
+from google_calendar_mcp.tools import sanitize_api_error
 
 logger = logging.getLogger(__name__)
 
@@ -26,10 +27,10 @@ def register_calendar_tools(mcp: Any, get_client: Any) -> None:
             calendars = list_calendars(client)
             return json.dumps({"calendars": calendars, "count": len(calendars)})
         except CalendarApiError as exc:
-            return _error(str(exc))
-        except Exception as exc:
+            return _error(sanitize_api_error(exc))
+        except Exception:
             logger.exception("Unexpected error in list_calendars_tool")
-            return _error(f"Unexpected error: {exc}")
+            return _error("An internal error occurred. Check server logs for details.")
 
     @mcp.tool()
     def get_calendar_tool(calendar_id: str) -> str:
