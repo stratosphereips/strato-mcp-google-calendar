@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 import sys
+import threading
 
 from mcp.server.fastmcp import FastMCP
 
@@ -12,15 +13,17 @@ mcp = FastMCP("Google Calendar")
 
 # Lazy globals — populated in main() after config + auth succeed
 _client = None
+_client_lock = threading.Lock()
 
 
 def _get_client():
-    if _client is None:
-        raise RuntimeError(
-            "Google Calendar client not initialised. "
-            "Ensure main() completed authentication before tools are called."
-        )
-    return _client
+    with _client_lock:
+        if _client is None:
+            raise RuntimeError(
+                "Google Calendar client not initialised. "
+                "Ensure main() completed authentication before tools are called."
+            )
+        return _client
 
 
 def _register_tools() -> None:
@@ -62,7 +65,8 @@ def main() -> None:
         )
         sys.exit(1)
 
-    _client = build_client(credentials)
+    with _client_lock:
+        _client = build_client(credentials)
     logger.info("Google Calendar client initialised successfully")
 
     _register_tools()
