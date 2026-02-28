@@ -166,7 +166,7 @@ In `claude_desktop_config.json`:
       "command": "docker",
       "args": [
         "run", "--rm", "-i",
-        "-v", "strato-mcp-google-calendar_tokens:/tokens",
+        "-v", "google-calendar-mcp-tokens:/tokens",
         "--env-file", "/absolute/path/to/.env",
         "google-calendar-mcp:latest",
         "serve"
@@ -181,14 +181,14 @@ Replace `/absolute/path/to/.env` with the full path to your `.env` file. Claude 
 ### 5. Register with Claude Code (Docker)
 
 ```bash
-claude mcp add google-calendar -- \
+claude mcp add --transport stdio google-calendar -- \
   docker run --rm -i \
-    -v strato-mcp-google-calendar_tokens:/tokens \
+    -v google-calendar-mcp-tokens:/tokens \
     --env-file /absolute/path/to/.env \
     google-calendar-mcp:latest serve
 ```
 
-(`-i` keeps stdin open for the MCP stdio transport.)
+(`--transport stdio` is the default but shown explicitly for clarity. `-i` keeps stdin open for the MCP stdio transport. Replace `/absolute/path/to/.env` with the full path to your `.env` file.)
 
 ---
 

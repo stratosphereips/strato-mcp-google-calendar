@@ -22,3 +22,4 @@ services:
 
 volumes:
   tokens:
+    name: google-calendar-mcp-tokens
