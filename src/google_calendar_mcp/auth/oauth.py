@@ -71,7 +71,10 @@ def get_credentials(
     Raises:
         CalendarAuthError: If authentication cannot be completed.
     """
-    token_data = token_store.load(user_id)
+    try:
+        token_data = token_store.load(user_id)
+    except ValueError as exc:
+        raise CalendarAuthError(f"Invalid user_id {user_id!r}: {exc}") from exc
     creds: Credentials | None = None
 
     if token_data:
