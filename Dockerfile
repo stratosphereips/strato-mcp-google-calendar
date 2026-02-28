@@ -1,4 +1,5 @@
 # syntax=docker/dockerfile:1
+# check=skip=SecretsUsedInArgOrEnv
 
 # ---------------------------------------------------------------------------
 # Stage 1: builder — install production dependencies with uv
@@ -22,8 +23,12 @@ FROM python:3.12-slim AS runtime
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     VIRTUAL_ENV=/app/.venv \
-    PATH="/app/.venv/bin:$PATH" \
-    TOKEN_STORE_PATH=/tokens
+    PATH="/app/.venv/bin:$PATH"
+
+# TOKEN_STORE_PATH is a filesystem path, not a secret.
+# Default is baked in here for convenience; override with --env TOKEN_STORE_PATH=...
+# hadolint ignore=DL3044
+ENV TOKEN_STORE_PATH=/tokens
 
 WORKDIR /app
 

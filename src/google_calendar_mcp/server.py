@@ -57,10 +57,7 @@ def main() -> None:
         print(f"[ERROR] {exc}", file=sys.stderr)
         print(
             "\n[ERROR] No valid token found. Run authentication first:\n\n"
-            "  docker run --rm -it -p 8081:8081 \\\n"
-            "    -v google-calendar-tokens:/tokens \\\n"
-            "    --env-file .env \\\n"
-            "    google-calendar-mcp:latest auth\n",
+            "  docker compose run --rm -p 8081:8081 auth\n",
             file=sys.stderr,
         )
         sys.exit(1)

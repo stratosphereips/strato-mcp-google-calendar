@@ -141,13 +141,10 @@ docker build -t google-calendar-mcp:latest .
 
 ### 2. Authenticate (once)
 
-Run the auth flow interactively. It will open a browser, save the token to a named volume, and exit:
+Run the auth flow interactively. It will open a browser, save the token to the shared compose volume, and exit:
 
 ```bash
-docker run --rm -it -p 8081:8081 \
-  -v google-calendar-tokens:/tokens \
-  --env-file .env \
-  google-calendar-mcp:latest auth
+docker compose run --rm -p 8081:8081 auth
 ```
 
 Credentials are read from `.env` — they do not appear in the shell command, shell history, or `ps` output.
@@ -169,7 +166,7 @@ In `claude_desktop_config.json`:
       "command": "docker",
       "args": [
         "run", "--rm", "-i",
-        "-v", "google-calendar-tokens:/tokens",
+        "-v", "strato-mcp-google-calendar_tokens:/tokens",
         "--env-file", "/absolute/path/to/.env",
         "google-calendar-mcp:latest",
         "serve"
@@ -186,7 +183,7 @@ Replace `/absolute/path/to/.env` with the full path to your `.env` file. Claude 
 ```bash
 claude mcp add google-calendar -- \
   docker run --rm -i \
-    -v google-calendar-tokens:/tokens \
+    -v strato-mcp-google-calendar_tokens:/tokens \
     --env-file /absolute/path/to/.env \
     google-calendar-mcp:latest serve
 ```
