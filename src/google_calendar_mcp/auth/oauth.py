@@ -35,7 +35,7 @@ def _credentials_from_dict(data: dict[str, Any], config: Config) -> Credentials:
     return Credentials(
         token=data.get("token"),
         refresh_token=data.get("refresh_token"),
-        token_uri=data.get("token_uri", "https://oauth2.googleapis.com/token"),
+        token_uri="https://oauth2.googleapis.com/token",  # never trust stored value
         client_id=config.client_id,
         client_secret=config.client_secret,
         scopes=data.get("scopes"),
