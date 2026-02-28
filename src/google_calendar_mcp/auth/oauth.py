@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 from typing import Any
+from urllib.parse import urlparse
 
 from google.auth.exceptions import RefreshError
 from google.auth.transport.requests import Request
@@ -107,9 +108,10 @@ def get_credentials(
             "token_uri": "https://oauth2.googleapis.com/token",
         }
     }
+    port = urlparse(config.redirect_uri).port or 8081
     try:
         flow = InstalledAppFlow.from_client_config(client_config, scopes=config.scopes)
-        creds = flow.run_local_server(port=8081, open_browser=True)
+        creds = flow.run_local_server(port=port, open_browser=True)
     except Exception as exc:
         raise CalendarAuthError(
             f"OAuth flow failed for user {user_id!r}: {exc}"

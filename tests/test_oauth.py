@@ -7,6 +7,7 @@ import pytest
 from google.auth.exceptions import RefreshError
 from google.oauth2.credentials import Credentials
 
+from google_calendar_mcp.config import Config
 from google_calendar_mcp.auth.oauth import (
     CalendarAuthError,
     _credentials_from_dict,
@@ -130,6 +131,30 @@ class TestGetCredentials:
 
         mock_flow.run_local_server.assert_called_once()
         assert result is mock_creds
+
+    def test_browser_flow_uses_port_from_redirect_uri(self, tmp_token_store):
+        config = Config(
+            client_id="id",
+            client_secret="secret",
+            redirect_uri="http://localhost:9090",
+            scopes=["https://www.googleapis.com/auth/calendar"],
+        )
+        with patch(
+            "google_calendar_mcp.auth.oauth.InstalledAppFlow"
+        ) as mock_flow_cls:
+            mock_flow = MagicMock()
+            mock_creds = MagicMock(spec=Credentials)
+            mock_creds.valid = True
+            mock_flow.run_local_server.return_value = mock_creds
+            mock_flow_cls.from_client_config.return_value = mock_flow
+
+            with patch(
+                "google_calendar_mcp.auth.oauth._credentials_to_dict",
+                return_value={},
+            ):
+                get_credentials("default", config, tmp_token_store)
+
+        mock_flow.run_local_server.assert_called_once_with(port=9090, open_browser=True)
 
     def test_raises_auth_error_when_browser_flow_fails(
         self, valid_config, tmp_token_store
