@@ -79,7 +79,7 @@ def register_event_tools(mcp: Any, get_client: Any) -> None:
             calendar_id: Calendar to query (default: primary).
             time_min: Start of time range in RFC3339 format (e.g. 2024-01-01T00:00:00Z).
             time_max: End of time range in RFC3339 format.
-            max_results: Maximum number of events to return (1-100).
+            max_results: Maximum number of events to return (1-2500).
             order_by: Sort order: 'startTime' or 'updated'.
         """
         if order_by not in _VALID_ORDER_BY:
