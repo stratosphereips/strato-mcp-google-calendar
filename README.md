@@ -1,6 +1,8 @@
 # Stratosphere MCP Google Calendar
 
-A Python MCP server that exposes Google Calendar as tools for Claude. Currently supporting **9 tools:** list, search, get, create, update, and delete events; list and get calendars; check free/busy intervals.
+A Python MCP server that exposes Google Calendar as tools for AI assistants. Currently supporting **9 tools:** list, search, get, create, update, and delete events; list and get calendars; check free/busy intervals.
+
+Compatible with Claude, Gemini CLI, OpenAI Codex, and any MCP-compatible client.
 
 
 ## Prerequisites
@@ -48,7 +50,10 @@ Run the auth service. It prints an authorization URL. Open it in your browser, s
 docker compose run --rm -p 8081:8081 auth
 ```
 
-### Step 4: Register with Claude
+### Step 4: Register with your AI assistant
+
+<details>
+<summary><strong>Claude</strong></summary>
 
 **Claude Desktop** — edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
@@ -82,6 +87,56 @@ claude mcp add --transport stdio google-calendar -- \
     google-calendar-mcp:latest serve
 ```
 
+</details>
+
+<details>
+<summary><strong>Gemini CLI</strong></summary>
+
+Edit `~/.gemini/settings.json` (or `.gemini/settings.json` in your project root for project-scoped config):
+
+```json
+{
+  "mcpServers": {
+    "google-calendar": {
+      "command": "docker",
+      "args": [
+        "run", "--rm", "-i",
+        "-v", "google-calendar-mcp-tokens:/tokens",
+        "--env-file", "/absolute/path/to/.env",
+        "google-calendar-mcp:latest",
+        "serve"
+      ]
+    }
+  }
+}
+```
+
+Replace `/absolute/path/to/.env` with the full path to your `.env` file.
+
+</details>
+
+<details>
+<summary><strong>OpenAI Codex</strong></summary>
+
+Edit `~/.codex/config.toml` (or `.codex/config.toml` in your project root for project-scoped config):
+
+```toml
+[[mcp_servers]]
+name = "google-calendar"
+command = "docker"
+args = [
+  "run", "--rm", "-i",
+  "-v", "google-calendar-mcp-tokens:/tokens",
+  "--env-file", "/absolute/path/to/.env",
+  "google-calendar-mcp:latest",
+  "serve"
+]
+```
+
+Replace `/absolute/path/to/.env` with the full path to your `.env` file.
+
+</details>
+
 
 ## Alternative: local install (without Docker)
 
@@ -113,7 +168,10 @@ and grant calendar access. The token is saved to `~/.config/google-calendar-mcp/
 google-calendar-auth
 ```
 
-### Step 4: Register with Claude
+### Step 4: Register with your AI assistant
+
+<details>
+<summary><strong>Claude</strong></summary>
 
 **Claude Desktop** — edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
@@ -142,6 +200,52 @@ claude mcp add google-calendar /absolute/path/.venv/bin/google-calendar-mcp \
 ```
 
 > Avoid `--env KEY=VALUE` — credentials passed that way appear in shell history and `ps`.
+
+</details>
+
+<details>
+<summary><strong>Gemini CLI</strong></summary>
+
+Edit `~/.gemini/settings.json` (or `.gemini/settings.json` in your project root for project-scoped config):
+
+```json
+{
+  "mcpServers": {
+    "google-calendar": {
+      "command": "/absolute/path/.venv/bin/google-calendar-mcp",
+      "env": {
+        "GOOGLE_CLIENT_ID": "your_client_id",
+        "GOOGLE_CLIENT_SECRET": "your_client_secret"
+      }
+    }
+  }
+}
+```
+
+> This file will contain your OAuth credentials in plain text. Restrict its permissions
+> after editing: `chmod 600 ~/.gemini/settings.json`.
+
+</details>
+
+<details>
+<summary><strong>OpenAI Codex</strong></summary>
+
+Edit `~/.codex/config.toml` (or `.codex/config.toml` in your project root for project-scoped config):
+
+```toml
+[[mcp_servers]]
+name = "google-calendar"
+command = "/absolute/path/.venv/bin/google-calendar-mcp"
+
+[mcp_servers.env]
+GOOGLE_CLIENT_ID = "your_client_id"
+GOOGLE_CLIENT_SECRET = "your_client_secret"
+```
+
+> This file will contain your OAuth credentials in plain text. Restrict its permissions:
+> `chmod 600 ~/.codex/config.toml`.
+
+</details>
 
 
 ## Available Tools
@@ -179,4 +283,22 @@ uv pip install -e ".[dev]"
 pytest                        # run all 88 tests
 ```
 
+### Project structure
 
+```
+src/google_calendar_mcp/
+├── server.py          # FastMCP entry point
+├── config.py          # Env-var config loading
+├── auth/
+│   ├── oauth.py       # OAuth flow
+│   └── token_store.py # TokenStore ABC + FileTokenStore
+├── calendar/
+│   ├── client.py      # Google API client factory
+│   ├── events.py      # Events API wrappers
+│   ├── calendars.py   # CalendarList wrappers
+│   └── freebusy.py    # FreeBusy wrapper
+└── tools/
+    ├── events.py      # MCP tool definitions
+    ├── calendars.py
+    └── freebusy.py
+```
