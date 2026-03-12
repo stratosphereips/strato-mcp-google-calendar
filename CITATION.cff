@@ -1,3 +1,6 @@
+cff-version: 1.2.0
+title: >-
+  Google Calendar MCP
 message: 'If you use this software, please cite it as specified below.'
 type: software
 authors:
